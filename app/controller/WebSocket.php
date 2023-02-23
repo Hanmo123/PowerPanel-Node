@@ -25,17 +25,25 @@ class WebSocket
 
         $instance = new Instance($conn->token->data['instance']);
 
+        Event::Get('instance.message', $instance->uuid)
+            ->addHandler($conn->handler['message'] = new Handler(function (Handler $handler, string $sub, string $message) use ($conn) {
+                $conn->send(json_encode([
+                    'type' => 'message',
+                    'data' => $message
+                ]));
+            }));
+
         if ($conn->token->isPermit('console.status.get')) {
             $conn->send(json_encode([
                 'type' => 'status',
                 'data' => $instance->getInstanceStatus()
             ]));
             Event::Get('instance.status', $instance->uuid)
-                ->addHandler($conn->handler['status'] = new Handler(function (Handler $handler, string $sub, int $status, string $msg = NULL) use ($conn) {
+                ->addHandler($conn->handler['status'] = new Handler(function (Handler $handler, string $sub, int $status) use ($conn) {
                     $conn->send(json_encode([
                         'type' => 'status',
                         'data' => $status
-                    ] + ($msg ? ['msg' => $msg] : [])));
+                    ]));
                 }));
         }
         if ($conn->token->isPermit('console.history')) {

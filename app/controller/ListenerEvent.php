@@ -23,14 +23,21 @@ class ListenerEvent
 
     static public function onInstancePower(...$params)
     {
-        go(function (Handler $handler, string $uuid, string $power, string $msg = NULL) {
+        go(function (Handler $handler, string $uuid, string $power) {
             $instance = new Instance($uuid);
             switch ($power) {
                 case 'start':
                     $detail = new ContainerDetail($instance, $instance->getDetail());
 
                     if ($instance->getInstanceStats()['disk_usage'] > $detail->disk * 1024 * 1024) {
-                        $eventData = new EventData('instance.status', $instance->uuid, Instance::STATUS_STOPPED, '实例储存空间已达上限 无法启动');
+                        $eventData = new EventData('instance.message', $uuid, '实例储存空间已达上限 无法启动');
+                        $eventData->call();
+                        EventClient::Publish($eventData);
+                        return;
+                    }
+                    
+                    if ($instance->getInstanceStats()['is_suspended']) {
+                        $eventData = new EventData('instance.suspended', $uuid, '实例已被暂停 无法启动s');
                         $eventData->call();
                         EventClient::Publish($eventData);
                         return;
@@ -41,7 +48,7 @@ class ListenerEvent
                         ->start();
                     self::$listener->attach($instance, $detail->appConfig);
 
-                    $eventData = new EventData('instance.status', $instance->uuid, Instance::STATUS_STARTING, $msg);
+                    $eventData = new EventData('instance.status', $instance->uuid, Instance::STATUS_STARTING);
                     $eventData->call();
                     EventClient::Publish($eventData);
 
@@ -54,18 +61,18 @@ class ListenerEvent
                     $eventData->call();
                     EventClient::Publish($eventData);
 
-                    $eventData = new EventData('instance.status', $instance->uuid, Instance::STATUS_STOPPING, $msg);
+                    $eventData = new EventData('instance.status', $instance->uuid, Instance::STATUS_STOPPING);
                     $eventData->call();
                     EventClient::Publish($eventData);
 
                     Log::info('实例 ' . $instance->uuid . ' 正在关闭');
                     break;
                 case 'restart':
-                    Event::Get('instance.power', $instance->uuid)->call('stop', $msg);
+                    Event::Get('instance.power', $instance->uuid)->call('stop');
                     Event::Get('instance.status', $instance->uuid)
-                        ->addHandler(new Handler(function (Handler $handler, string $sub, int $status) use ($instance, $msg) {
+                        ->addHandler(new Handler(function (Handler $handler, string $sub, int $status) use ($instance) {
                             if ($status == Instance::STATUS_STOPPED) {
-                                Event::Get('instance.power', $instance->uuid)->call('start', $msg);
+                                Event::Get('instance.power', $instance->uuid)->call('start');
                                 $handler->remove();
                             }
                         }));
@@ -86,7 +93,12 @@ class ListenerEvent
 
     static public function onInstanceDiskExceeded(Handler $handler, string $uuid)
     {
-        Event::Get('instance.power', $uuid)->call('stop', '实例储存空间已达上限 正在关闭');
+        Event::Get('instance.power', $uuid)->call('stop');
+        
+        $eventData = new EventData('instance.message', $uuid, '实例储存空间已达上限 无法启动');
+        $eventData->call();
+        EventClient::Publish($eventData);
+        
         Log::info('实例 ' . $uuid . ' 储存空间超限 正在停止');
     }
 }
