@@ -19,6 +19,7 @@ class ContainerDetail
     public int $cpuQuota;
     public array $portBindings = [];
     public array $appConfig = [];
+    public bool $isSuspended;
 
     public function __construct(Instance $instance, array $detail)
     {
@@ -36,6 +37,8 @@ class ContainerDetail
         $this->cpuPeriod = 100000;
         $this->cpuQuota = $detail['cpu'] / 100 * $this->cpuPeriod;
         $this->appConfig = json_decode($detail['app']['config'], true);
+
+        $this->isSuspended = $detail['is_suspended'];
 
         // TODO 处理自带 Env
         foreach ([] as $key => $value) {

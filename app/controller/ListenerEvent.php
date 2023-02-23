@@ -35,9 +35,9 @@ class ListenerEvent
                         EventClient::Publish($eventData);
                         return;
                     }
-                    
-                    if ($instance->getInstanceStats()['is_suspended']) {
-                        $eventData = new EventData('instance.suspended', $uuid, '实例已被暂停 无法启动s');
+
+                    if ($detail->isSuspended) {
+                        $eventData = new EventData('instance.message', $uuid, '实例已被暂停 无法启动');
                         $eventData->call();
                         EventClient::Publish($eventData);
                         return;
