@@ -30,6 +30,7 @@ class WebSocket
     public function onClose(TcpConnection $conn)
     {
         /** @var Handler $handler */
+        if (!isset($conn->handler)) return;
         foreach ($conn->handler as $handler) {
             $handler->remove();
         }
