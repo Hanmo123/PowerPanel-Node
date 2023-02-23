@@ -1,12 +1,1 @@
-/.idea
-/.vscode
 /vendor
-*.log
-.env
-/tests/tmp
-/tests/.phpunit.result.cache
-test.php
-/build
-/config.json
-/windows.php
-/ssl

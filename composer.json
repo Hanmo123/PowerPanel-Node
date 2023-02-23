@@ -1,0 +1,15 @@
+{
+    "name": "powerpanel/node",
+    "autoload": {
+        "psr-4": {
+            "app\\": "app/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Hanmo5888",
+            "email": "letsgo@88.com"
+        }
+    ],
+    "require": {}
+}
