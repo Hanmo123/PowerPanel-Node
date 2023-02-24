@@ -2,6 +2,8 @@
 
 namespace app\Framework;
 
+use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\RouteInitEvent;
 use FastRoute\Dispatcher;
 use FastRoute\RouteCollector;
 
@@ -15,6 +17,8 @@ class Route
     {
         self::$dispatcher = simpleDispatcher(function (RouteCollector $r) {
             include __DIR__ . '/../config/Route.php';
+
+            Event::Dispatch(new RouteInitEvent($r));
         });
     }
 
