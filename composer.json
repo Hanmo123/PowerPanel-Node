@@ -11,5 +11,8 @@
             "email": "letsgo@88.com"
         }
     ],
-    "require": {}
+    "require": {
+        "nikic/fast-route": "^1.3",
+        "swoole/ide-helper": "^5.0"
+    }
 }

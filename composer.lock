@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8badcbdc998177fb537baa3e152af58d",
+    "content-hash": "5e7336654d3c1452e5e05f15e84d0dd1",
     "packages": [
         {
             "name": "nikic/fast-route",
