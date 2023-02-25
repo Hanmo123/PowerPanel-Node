@@ -2,7 +2,9 @@
 
 namespace app\Framework;
 
+use app\Framework\Request\Middleware;
 use FastRoute\Dispatcher;
+use ReflectionMethod;
 use Swoole\Http\Request as HttpRequest;
 use Swoole\Http\Response as HttpResponse;
 
@@ -29,6 +31,15 @@ class RequestHandler
                     throw new \Exception('请求方法错误。', 405);
                     break;
                 case Dispatcher::FOUND:
+                    // 中间件调用
+                    $attr = (new ReflectionMethod($routeInfo[1][0], $routeInfo[1][1]))
+                        ->getAttributes(Middleware::class);
+                    if (isset($attr[0])) foreach ($attr[0]->getArguments() as $middleware) {
+                        // 存在中间件
+                        $middleware::process($req, $res);
+                    }
+
+                    // 请求调用并返回
                     $res->end(json_encode(call_user_func($routeInfo[1], $req, $res, ...$routeInfo[2]), JSON_UNESCAPED_UNICODE));
                     break;
             }

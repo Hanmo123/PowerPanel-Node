@@ -2,12 +2,15 @@
 
 namespace app\plugins\Token;
 
+use app\Framework\Request\Middleware;
+use app\Framework\Request\Middleware\PanelAuthMiddleware;
 use app\Framework\Token;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 
 class RouteHandler
 {
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Generate(Request $request, Response $response)
     {
         $attr = $request->post['attributes'];

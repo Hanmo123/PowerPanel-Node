@@ -18,7 +18,7 @@ class Logger
     {
         $logger = new MonologLogger('App');
 
-        $formatter = new LineFormatter('[%datetime%] [%channel%] [%level_name%] %message%' . PHP_EOL, 'Y-m-d H:i:s');
+        $formatter = new LineFormatter('[%datetime%] [%level_name%] [%channel%] %message%' . PHP_EOL, 'Y-m-d H:i:s');
 
         $handler = new RotatingFileHandler(self::$path, 7, Level::Debug);
         $handler->setFormatter($formatter);

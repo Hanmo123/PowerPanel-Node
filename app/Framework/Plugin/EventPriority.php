@@ -2,9 +2,6 @@
 
 namespace app\Framework\Plugin;
 
-use Attribute;
-
-#[Attribute]
 class EventPriority
 {
     const HIGHEST = 7;
