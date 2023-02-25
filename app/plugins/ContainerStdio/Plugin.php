@@ -11,8 +11,6 @@ class Plugin extends PluginBase
 
     public function onLoad(): bool
     {
-        $this->registerEvents(new EventListener());
-
         return true;
     }
 }

@@ -11,6 +11,8 @@ class EventListener extends PluginEventListener
     #[EventPriority(EventPriority::NORMAL)]
     public function onRouteInit(RouteInitEvent $routeInitEvent)
     {
-        var_dump($routeInitEvent->routeCollector);
+        $r = $routeInitEvent->routeCollector;
+
+        $r->addRoute('GET', '/websocket', [Route::class, 'WebSocket']);
     }
 }

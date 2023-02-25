@@ -6,7 +6,7 @@ use FastRoute\Dispatcher;
 use Swoole\Http\Request as HttpRequest;
 use Swoole\Http\Response as HttpResponse;
 
-class Request
+class RequestHandler
 {
     static public function onRequest(HttpRequest $req, HttpResponse $res)
     {
@@ -23,7 +23,7 @@ class Request
                     throw new \Exception('请求方法错误。', 405);
                     break;
                 case Dispatcher::FOUND:
-                    $res->end(json_encode(call_user_func($routeInfo[1], ...$routeInfo[2]), JSON_UNESCAPED_UNICODE));
+                    $res->end(json_encode(call_user_func($routeInfo[1], $req, $res, ...$routeInfo[2]), JSON_UNESCAPED_UNICODE));
                     break;
             }
         } catch (\Throwable $th) {

@@ -14,7 +14,8 @@ class Server
 
         $server = new HttpServer('0.0.0.0', 9502);
 
-        $server->handle('/', [Request::class, 'onRequest']);
+        $server->handle('/',            [RequestHandler::class, 'onRequest']);
+        $server->handle('/websocket',   [WebSocketHandler::class, 'onConnect']);
 
         self::$server = $server;
         self::$server->start();

@@ -53,9 +53,10 @@ class Event
             foreach (self::$eventList[$eventName] as $list) {
                 // 遍历事件
                 foreach ($list as $callable) {
-                    $callable($event);
+                    if ($callable($event) === false) return false; // 事件返回 false 停止传递
                 }
             }
         }
+        return true;
     }
 }
