@@ -8,7 +8,7 @@ abstract class PluginBase
 
     public array $listener = [];
 
-    abstract public function onLoad(): bool;
+    abstract public function onLoad(): void;
 
     public function registerEvents(EventListener $eventListener)
     {

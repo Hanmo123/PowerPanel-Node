@@ -15,12 +15,15 @@ class WebSocketHandler
 {
     static public function onConnect(Request $req, Response $res)
     {
+        @Logger::Get()->info('[' . $req->server['remote_addr'] . ':' . $req->server['remote_port'] . '] [WS] ' . $req->server['request_uri'] . (isset($req->server['query_string']) ? '?' . $req->server['query_string'] : null));
+
         if (!Event::Dispatch(
             new WebSocketConnectEvent($wrapperReq = new WrapperRequest($req), $wrapperRes = new WrapperResponse($res))
         )) return $res->close(); // 插件拦截事件 拒绝连接
 
         // WebSocket 握手
-        $res->upgrade();
+        if (!$res->upgrade())
+            return Logger::Get()->info('[' . $req->server['remote_addr'] . ':' . $req->server['remote_port'] . '] [WS] 握手失败');
 
         // 循环接收 WebSocket 包
         while (1) {

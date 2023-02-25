@@ -9,10 +9,8 @@ class Plugin extends PluginBase
     public string $name = 'Console';
     public string $version = '1.0.0';
 
-    public function onLoad(): bool
+    public function onLoad(): void
     {
         $this->registerEvents(new EventListener());
-
-        return true;
     }
 }

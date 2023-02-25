@@ -11,6 +11,8 @@ class RequestHandler
     static public function onRequest(HttpRequest $req, HttpResponse $res)
     {
         try {
+            @Logger::Get()->info('[' . $req->server['remote_addr'] . ':' . $req->server['remote_port'] . '] [' . strtoupper($req->getMethod()) . '] ' . $req->server['request_uri'] . (isset($req->server['query_string']) ? '?' . $req->server['query_string'] : null));
+
             $res->header('Content-Type', 'application/json');
 
             $routeInfo = Route::Dispatch($req->getMethod(), $req->server['request_uri']);

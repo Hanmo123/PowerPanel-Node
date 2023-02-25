@@ -1,16 +1,15 @@
 <?php
 
-namespace app\plugins\Attach;
+namespace app\plugins\ContainerStdio;
 
 use app\Framework\Plugin\PluginBase;
 
 class Plugin extends PluginBase
 {
-    public string $name = 'Attach';
+    public string $name = 'ContainerStdio';
     public string $version = '1.0.0';
 
-    public function onLoad(): bool
+    public function onLoad(): void
     {
-        return true;
     }
 }
