@@ -15,6 +15,10 @@ class RequestHandler
 
             $res->header('Content-Type', 'application/json');
 
+            // 解析 JSON Request POST
+            if (isset($req->header['content-type']) && strtolower($req->header['content-type']) == 'application/json')
+                $req->post = json_decode($req->rawContent(), true);
+
             $routeInfo = Route::Dispatch($req->getMethod(), $req->server['request_uri']);
 
             switch ($routeInfo[0]) {
