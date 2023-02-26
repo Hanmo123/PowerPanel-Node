@@ -35,7 +35,7 @@ class Token
         return $this->token;
     }
 
-    static public function Get(string $token)
+    static public function Get(string $token): self
     {
         if (!isset(self::$list[$token]))
             throw new \app\Framework\Exception\TokenNotFoundException();

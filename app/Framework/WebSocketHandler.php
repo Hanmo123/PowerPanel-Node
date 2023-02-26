@@ -3,6 +3,7 @@
 namespace app\Framework;
 
 use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
 use app\Framework\Plugin\Event\WebSocketMessageEvent;
 use app\Framework\Wrapper\Request as WrapperRequest;
@@ -43,10 +44,11 @@ class WebSocketHandler
             Event::Dispatch(new WebSocketMessageEvent($wrapperReq, $wrapperRes, $frame));
         }
 
-        self::onClose($req);
+        self::onClose($wrapperReq, $wrapperRes);
     }
 
-    static public function onClose(Request $req)
+    static public function onClose(WrapperRequest $req, WrapperResponse $res)
     {
+        Event::Dispatch(new WebSocketCloseEvent($req, $res));
     }
 }
