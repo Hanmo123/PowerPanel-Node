@@ -4,7 +4,6 @@ namespace app\plugins\Token;
 
 use app\Framework\Request\Middleware;
 use app\Framework\Request\Middleware\PanelAuthMiddleware;
-use app\Framework\Token;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 

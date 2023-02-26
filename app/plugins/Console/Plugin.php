@@ -13,6 +13,6 @@ class Plugin extends PluginBase
     {
         $this->getLogger()->info('加载成功');
 
-        $this->registerEvents(new EventListener());
+        $this->registerEvents(new WebSocketEventHandler());
     }
 }

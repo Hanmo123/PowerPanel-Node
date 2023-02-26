@@ -1,6 +1,6 @@
 <?php
 
-namespace app\Framework;
+namespace app\plugins\Token;
 
 use app\Framework\Util\Random;
 

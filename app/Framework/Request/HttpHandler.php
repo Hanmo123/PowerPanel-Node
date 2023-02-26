@@ -1,14 +1,16 @@
 <?php
 
-namespace app\Framework;
+namespace app\Framework\Request;
 
+use app\Framework\Logger;
 use app\Framework\Request\Middleware;
+use app\Framework\Route;
 use FastRoute\Dispatcher;
 use ReflectionMethod;
 use Swoole\Http\Request as HttpRequest;
 use Swoole\Http\Response as HttpResponse;
 
-class RequestHandler
+class HttpHandler
 {
     static public function onRequest(HttpRequest $req, HttpResponse $res)
     {

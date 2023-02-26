@@ -1,7 +1,8 @@
 <?php
 
-namespace app\Framework;
+namespace app\Framework\Request;
 
+use app\Framework\Logger;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
