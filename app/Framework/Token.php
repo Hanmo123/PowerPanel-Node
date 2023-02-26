@@ -58,6 +58,11 @@ class Token
 
     static public function Purge()
     {
-        // TODO
+        /** @param Token $token */
+        foreach (self::$list as $key => $token) {
+            if ($token->isExpired()) {
+                unset(self::$list[$key]);
+            }
+        }
     }
 }

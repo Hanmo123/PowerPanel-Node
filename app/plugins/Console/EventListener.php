@@ -13,7 +13,7 @@ class EventListener extends PluginEventListener
     public function onWebSocketConnect(WebSocketConnectEvent $ev)
     {
         // WebSocket 鉴权
-        if ($ev->request->request->server['request_uri'] == '/websocket/console') {
+        if ($ev->request->request->server['request_uri'] == '/ws/console') {
             // TODO
         }
     }

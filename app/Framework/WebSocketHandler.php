@@ -19,7 +19,7 @@ class WebSocketHandler
 
         if (!Event::Dispatch(
             new WebSocketConnectEvent($wrapperReq = new WrapperRequest($req), $wrapperRes = new WrapperResponse($res))
-        )) return $res->close(); // 插件拦截事件 拒绝连接
+        )) return;  // 插件拦截事件 拒绝连接
 
         // WebSocket 握手
         if (!$res->upgrade())
