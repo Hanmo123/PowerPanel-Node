@@ -16,8 +16,6 @@ class Route
     static public function Init()
     {
         self::$dispatcher = simpleDispatcher(function (RouteCollector $r) {
-            include __DIR__ . '/../config/Route.php';
-
             Event::Dispatch(new RouteInitEvent($r));
         });
     }
