@@ -4,6 +4,8 @@ namespace app\plugins\Console;
 
 use app\Framework\Exception\TokenInvalidException;
 use app\Framework\Exception\TokenNotFoundException;
+use app\Framework\Model\Container;
+use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectedEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
@@ -11,7 +13,9 @@ use app\Framework\Plugin\Event\WebSocketMessageEvent;
 use app\Framework\Plugin\EventListener;
 use app\Framework\Plugin\EventPriority;
 use app\Framework\Wrapper\Response;
+use app\plugins\ContainerListener\Event\ContainerStdinEvent;
 use app\plugins\ContainerListener\Event\ContainerStdoutEvent;
+use app\plugins\ContainerListener\StdioHandler;
 use app\plugins\Token\Token;
 
 class WebSocketEventHandler extends EventListener
@@ -29,7 +33,7 @@ class WebSocketEventHandler extends EventListener
             $response = $ev->response->response;
 
             // WebSocket 鉴权
-            if ($request->server['request_uri'] == '/ws/console') {
+            if ($ev->request->path() == '/ws/console') {
                 if (!isset($request->get['token']))
                     throw new TokenNotFoundException();
 
@@ -65,7 +69,7 @@ class WebSocketEventHandler extends EventListener
         $base64 = base64_encode($ev->data);
         foreach (self::$connections as $conn) {
             if ($conn->token->data['instance'] != $ev->container->uuid) continue;
-            if (!$conn->token->checkPermission('console.read')) return;
+            if (!$conn->token->isPermit('console.read')) return;
             $conn->send([
                 'type' => 'stdout',
                 'data' => $base64
@@ -76,7 +80,24 @@ class WebSocketEventHandler extends EventListener
     #[EventPriority(EventPriority::NORMAL)]
     public function onWebSocketMessage(WebSocketMessageEvent $ev)
     {
+        if ($ev->request->path() != '/ws/console') return;
+
         $data = json_decode($ev->frame->data, true);
+        switch ($data['type'] ?? null) {
+            case 'stdin':
+                // 检查权限
+                if (!$ev->response->token->isPermit('console.write')) return;
+                if (!Event::Dispatch(
+                    new ContainerStdinEvent(
+                        $ev->request,
+                        $ev->response,
+                        $container = new Container($ev->response->token->data['instance']),
+                        base64_decode($data['data'])
+                    )
+                )) return;
+                StdioHandler::WriteStdin($container, base64_decode($data['data']));
+                break;
+        }
     }
 
     #[EventPriority(EventPriority::NORMAL)]

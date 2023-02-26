@@ -8,10 +8,14 @@ use app\Framework\Model\Container;
 use app\Framework\Plugin\Event;
 use app\plugins\ContainerListener\Event\ContainerAttachEvent;
 use app\plugins\ContainerListener\Event\ContainerStdoutEvent;
+use Swoole\Coroutine\Http\Client;
 use Swoole\WebSocket\CloseFrame;
 
 class StdioHandler
 {
+    /**
+     * @var array<Client>
+     */
     static array $list;
 
     static public function Init()
@@ -36,7 +40,7 @@ class StdioHandler
                 new ContainerAttachEvent($container)
             )) return;
 
-            $client = (new Docker())->getClient();
+            $client = self::$list[$container->uuid] = (new Docker())->getClient();
             $client->setHeaders(['Host' => 'localhost']);
             $client->upgrade('/containers/' . $container->uuid . '/attach/ws?stream=1&stdout=1');
 
@@ -59,5 +63,10 @@ class StdioHandler
                 )) return;
             }
         });
+    }
+
+    static public function WriteStdin(Container $container, mixed $content)
+    {
+        self::$list[$container->uuid]->push($content);
     }
 }

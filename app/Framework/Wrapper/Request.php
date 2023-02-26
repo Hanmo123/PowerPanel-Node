@@ -10,4 +10,9 @@ class Request
         public SwooleRequest $request
     ) {
     }
+
+    public function path()
+    {
+        return $this->request->server['request_uri'];
+    }
 }
