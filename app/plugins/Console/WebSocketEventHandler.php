@@ -5,14 +5,20 @@ namespace app\plugins\Console;
 use app\Framework\Exception\TokenInvalidException;
 use app\Framework\Exception\TokenNotFoundException;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
+use app\Framework\Plugin\Event\WebSocketConnectedEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
 use app\Framework\Plugin\Event\WebSocketMessageEvent;
-use app\Framework\Plugin\EventListener as PluginEventListener;
+use app\Framework\Plugin\EventListener;
 use app\Framework\Plugin\EventPriority;
+use app\Framework\Wrapper\Response;
+use app\plugins\ContainerListener\Event\ContainerStdoutEvent;
 use app\plugins\Token\Token;
 
-class WebSocketEventHandler extends PluginEventListener
+class WebSocketEventHandler extends EventListener
 {
+    /**
+     * @var array<Response>
+     */
     static protected $connections = [];
 
     #[EventPriority(EventPriority::NORMAL)]
@@ -31,7 +37,9 @@ class WebSocketEventHandler extends PluginEventListener
                 if ($token->isExpired())
                     throw new TokenInvalidException();
 
-                self::$connections[$response->fd] = $response;
+                $ev->response->token = $token;
+
+                self::$connections[$response->fd] = $ev->response;
             }
         } catch (\Throwable $th) {
             $response->header('Content-Type', 'application/json');
@@ -42,6 +50,26 @@ class WebSocketEventHandler extends PluginEventListener
             ], JSON_UNESCAPED_UNICODE));
 
             return false;
+        }
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onWebSocketConnected(WebSocketConnectedEvent $ev)
+    {
+        WebSocketHandler::onConnect($ev->request, $ev->response);
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onContainerStdout(ContainerStdoutEvent $ev)
+    {
+        $base64 = base64_encode($ev->data);
+        foreach (self::$connections as $conn) {
+            if ($conn->token->data['instance'] != $ev->container->uuid) continue;
+            if (!$conn->token->checkPermission('console.read')) return;
+            $conn->send([
+                'type' => 'stdout',
+                'data' => $base64
+            ]);
         }
     }
 
