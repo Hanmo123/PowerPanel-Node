@@ -11,7 +11,7 @@ class Plugin extends PluginBase
 
     public function onLoad(): void
     {
-        $this->getLogger()->info('加载成功');
+        $this->getLogger()->info('加载完成');
 
         $this->registerEvents(new EventListener());
     }

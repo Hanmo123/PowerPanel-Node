@@ -4,7 +4,7 @@ namespace app\plugins\Console;
 
 use app\Framework\Exception\TokenInvalidException;
 use app\Framework\Exception\TokenNotFoundException;
-use app\Framework\Model\Container;
+use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectedEvent;
@@ -13,9 +13,9 @@ use app\Framework\Plugin\Event\WebSocketMessageEvent;
 use app\Framework\Plugin\EventListener;
 use app\Framework\Plugin\EventPriority;
 use app\Framework\Wrapper\Response;
-use app\plugins\ContainerListener\Event\ContainerStdinEvent;
-use app\plugins\ContainerListener\Event\ContainerStdoutEvent;
-use app\plugins\ContainerListener\StdioHandler;
+use app\plugins\InstanceListener\Event\InstanceStdinEvent;
+use app\plugins\InstanceListener\Event\InstanceStdoutEvent;
+use app\plugins\InstanceListener\StdioHandler;
 use app\plugins\Token\Token;
 
 class WebSocketEventHandler extends EventListener
@@ -64,11 +64,11 @@ class WebSocketEventHandler extends EventListener
     }
 
     #[EventPriority(EventPriority::NORMAL)]
-    public function onContainerStdout(ContainerStdoutEvent $ev)
+    public function onInstanceStdout(InstanceStdoutEvent $ev)
     {
         $base64 = base64_encode($ev->data);
         foreach (self::$connections as $conn) {
-            if ($conn->token->data['instance'] != $ev->container->uuid) continue;
+            if ($conn->token->data['instance'] != $ev->instance->uuid) continue;
             if (!$conn->token->isPermit('console.read')) return;
             $conn->send([
                 'type' => 'stdout',
@@ -88,14 +88,14 @@ class WebSocketEventHandler extends EventListener
                 // 检查权限
                 if (!$ev->response->token->isPermit('console.write')) return;
                 if (!Event::Dispatch(
-                    new ContainerStdinEvent(
+                    new InstanceStdinEvent(
                         $ev->request,
                         $ev->response,
-                        $container = new Container($ev->response->token->data['instance']),
+                        $instance = Instance::Get($ev->response->token->data['instance']),
                         base64_decode($data['data'])
                     )
                 )) return;
-                StdioHandler::WriteStdin($container, base64_decode($data['data']));
+                StdioHandler::Write($instance, base64_decode($data['data']));
                 break;
         }
     }

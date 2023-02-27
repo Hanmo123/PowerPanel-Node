@@ -3,6 +3,8 @@
 namespace app\Framework;
 
 use app\Framework\Exception\PluginLoadException;
+use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\PluginLoadedEvent;
 use app\Framework\Plugin\PluginBase;
 use Throwable;
 
@@ -37,6 +39,10 @@ class Plugin
         });
 
         $logger->info('插件已加载完成');
+
+        Event::Dispatch(
+            new PluginLoadedEvent()
+        );
     }
 
     static public function Exists(PluginBase $plugin)

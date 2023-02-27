@@ -1,16 +1,16 @@
 <?php
 
-namespace app\plugins\ContainerListener\Event;
+namespace app\plugins\InstanceListener\Event;
 
-use app\Framework\Model\Container;
+use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event\EventBase;
 use Swoole\Coroutine\Http\Client;
 
-class ContainerStdoutEvent extends EventBase
+class InstanceStdoutEvent extends EventBase
 {
     public function __construct(
         public Client $client,
-        public Container $container,
+        public Instance $instance,
         public mixed $data
     ) {
     }
