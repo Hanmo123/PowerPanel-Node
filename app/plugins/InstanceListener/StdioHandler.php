@@ -18,6 +18,14 @@ class StdioHandler
      */
     static array $list;
 
+    static public function Init()
+    {
+        foreach (Instance::$list as $instance) {
+            if ($instance->status != Instance::STATUS_RUNNING) continue;
+            StdioHandler::Attach($instance);
+        }
+    }
+
     static public function Attach(Instance $instance)
     {
         go(function () use ($instance) {

@@ -41,15 +41,14 @@ class Instance
         return self::$list[$uuid];
     }
 
-    static protected function List()
+    static protected function InitList()
     {
         $client = new Panel();
-        return array_map(
-            fn ($data) => new self(
+        foreach ($client->get('/api/node/ins')['attributes']['list'] as $data) {
+            self::$list[$data['uuid']] = new self(
                 ...array_intersect_key($data, array_flip(['id', 'uuid', 'name', 'is_suspended', 'cpu', 'memory', 'swap', 'disk', 'image']))
-            ),
-            $client->get('/api/node/ins')['attributes']['list']
-        );
+            );
+        }
     }
 
     static protected function InitStatus()
@@ -69,7 +68,7 @@ class Instance
         $logger = Logger::Get();
 
         $logger->info('正在获取面板实例列表...');
-        self::$list = self::List();
+        self::InitList();
 
         $logger->info('正在获取实例状态...');
         self::InitStatus();

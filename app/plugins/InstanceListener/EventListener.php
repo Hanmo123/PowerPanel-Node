@@ -19,6 +19,6 @@ class EventListener extends PluginEventListener
     #[EventPriority(EventPriority::NORMAL)]
     public function onInstanceListed(InstanceListedEvent $ev)
     {
-        print_r(Instance::$list);
+        StdioHandler::Init();
     }
 }
