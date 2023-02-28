@@ -3,6 +3,7 @@
 namespace app\Framework;
 
 use app\Framework\Exception\PluginLoadException;
+use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\PluginLoadedEvent;
 use app\Framework\Plugin\PluginBase;

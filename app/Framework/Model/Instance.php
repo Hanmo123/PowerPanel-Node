@@ -16,6 +16,10 @@ class Instance
     const STATUS_STOPPING = 31;
     const STATUS_STOPPED = 41;
 
+    static public array $filter = [
+        'id', 'uuid', 'name', 'is_suspended', 'cpu', 'memory', 'swap', 'disk', 'image'
+    ];
+
     /**
      * @var array<self>
      */
@@ -32,7 +36,11 @@ class Instance
         public int $memory,
         public int $swap,
         public int $disk,
-        public string $image
+        public string $image,
+        public App $app,
+        public Version $version,
+        public Allocation $allocation,
+        public array $allocations
     ) {
     }
 
@@ -46,7 +54,15 @@ class Instance
         $client = new Panel();
         foreach ($client->get('/api/node/ins')['attributes']['list'] as $data) {
             self::$list[$data['uuid']] = new self(
-                ...array_intersect_key($data, array_flip(['id', 'uuid', 'name', 'is_suspended', 'cpu', 'memory', 'swap', 'disk', 'image']))
+                ...array_intersect_key($data, array_flip(self::$filter)),
+                ...[
+                    'app' => new App(...array_intersect_key($data['app'], array_flip(App::$filter))),
+                    'version' => new Version(...array_intersect_key($data['version'], array_flip(Version::$filter))),
+                    'allocation' => new Allocation(...array_intersect_key($data['allocation'], array_flip(Allocation::$filter))),
+                    'allocations' => array_map(function ($allocation) {
+                        return new Allocation(...array_intersect_key($allocation, array_flip(Allocation::$filter)));
+                    }, $data['allocations'])
+                ]
             );
         }
     }
