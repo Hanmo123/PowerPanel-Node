@@ -7,7 +7,7 @@ use app\Framework\Client\Panel;
 use app\Framework\Logger;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceListedEvent;
-use app\Framework\Plugin\Event\InstanceStatusEvent;
+use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\plugins\InstanceListener\StdioHandler;
 
 class Instance
@@ -63,7 +63,7 @@ class Instance
         // Stopping 事件
         $this->status = self::STATUS_STOPPING;
         Event::Dispatch(
-            new InstanceStatusEvent($this, $this->status)
+            new InstanceStatusUpdateEvent($this, $this->status)
         );
 
         // Stopped 事件
@@ -71,7 +71,7 @@ class Instance
             $this->wait();
             $this->status = self::STATUS_STOPPED;
             Event::Dispatch(
-                new InstanceStatusEvent($this, $this->status)
+                new InstanceStatusUpdateEvent($this, $this->status)
             );
         }
     }

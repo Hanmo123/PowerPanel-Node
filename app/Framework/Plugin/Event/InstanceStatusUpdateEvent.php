@@ -7,11 +7,11 @@ use app\Framework\Model\Instance;
 /**
  * 此事件不可拦截
  */
-class InstanceStatusEvent extends EventBase
+class InstanceStatusUpdateEvent extends EventBase
 {
     public function __construct(
         public Instance $instance,
-        public int $power
+        public int $status
     ) {
     }
 }

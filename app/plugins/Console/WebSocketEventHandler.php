@@ -7,6 +7,7 @@ use app\Framework\Exception\TokenNotFoundException;
 use app\Framework\Logger;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectedEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
@@ -130,16 +131,16 @@ class WebSocketEventHandler extends EventListener
         unset(self::$connections[$ev->response->response->fd]);
     }
 
-    // #[EventPriority(EventPriority::NORMAL)]
-    // public function onInstancePowerUpdate(InstancePowerUpdateEvent $ev)
-    // {
-    //     foreach (self::$connections as $conn) {
-    //         if ($conn->token->data['instance'] != $ev->instance->uuid) continue;
-    //         if (!$conn->token->isPermit('console.read')) return;
-    //         $conn->send([
-    //             'type' => 'status',
-    //             'data' => $base64
-    //         ]);
-    //     }
-    // }
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onInstanceStatusUpdate(InstanceStatusUpdateEvent $ev)
+    {
+        foreach (self::$connections as $conn) {
+            if ($conn->token->data['instance'] != $ev->instance->uuid) continue;
+            if (!$conn->token->isPermit('console.read')) return;
+            $conn->send([
+                'type' => 'status',
+                'data' => $ev->status
+            ]);
+        }
+    }
 }
