@@ -6,6 +6,7 @@ use app\Framework\Client\Docker;
 use app\Framework\Logger;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\plugins\InstanceListener\Event\InstanceAttachEvent;
 use app\plugins\InstanceListener\Event\InstanceStdoutEvent;
 use Swoole\Coroutine\Http\Client;
@@ -29,7 +30,12 @@ class StdioHandler
     static public function Attach(Instance $instance)
     {
         go(function () use ($instance) {
-            Logger::Get('InstanceListener')->debug('实例 ' . $instance->uuid . ' 开始监听');
+            $logger = Logger::Get('InstanceListener');
+
+            if (isset(self::$list[$instance->uuid]))
+                return $logger->info('实例 ' . $instance->uuid . ' 已在监听');
+
+            $logger->debug('实例 ' . $instance->uuid . ' 开始监听');
 
             // 触发 InstanceAttach 事件
             if (!Event::Dispatch(
@@ -55,11 +61,22 @@ class StdioHandler
                     continue;
                 }
 
+                if ($instance->status == Instance::STATUS_STARTING) {
+                    // 启动中状态 监测启动成功关键词
+                    if (strpos($frame->data, $instance->app->config['done']) !== false) {
+                        $instance->status = Instance::STATUS_RUNNING;
+                        Event::Dispatch(
+                            new InstanceStatusUpdateEvent($instance, $instance->status)
+                        );
+                    }
+                }
+
                 // 触发 InstanceStdout 事件
                 if (!Event::Dispatch(
                     new InstanceStdoutEvent($client, $instance, $frame->data)
-                )) return;
+                )) continue;
             }
+            unset(self::$list[$instance->uuid]);
         });
     }
 

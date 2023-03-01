@@ -11,6 +11,7 @@ class App
     public array $data_path;
     public array $images;
     public array $config;
+    public array $startup;
 
     public function __construct(
         public int $id,
@@ -19,14 +20,15 @@ class App
         public $working_path,
         string $images,
         string $config,
-        public string $startup,
+        string $startup,
         public bool $skip_install,
         public string $install_image,
         public string $install_script,
-        public string $exit = 'exit',    // TODO
+        public string $exit = 'stop',    // TODO
     ) {
         $this->data_path = json_decode($data_path, true);
         $this->images = json_decode($images, true);
         $this->config = json_decode($config, true);
+        $this->startup = explode(' ', $startup);
     }
 }

@@ -15,4 +15,9 @@ class Allocation
         public string $alias
     ) {
     }
+
+    public function getBindings()
+    {
+        return [];
+    }
 }

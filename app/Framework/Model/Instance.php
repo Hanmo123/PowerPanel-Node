@@ -8,6 +8,7 @@ use app\Framework\Logger;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
+use app\Framework\Util\Config;
 use app\plugins\InstanceListener\StdioHandler;
 
 class Instance
@@ -17,6 +18,8 @@ class Instance
     const STATUS_RUNNING = 21;
     const STATUS_STOPPING = 31;
     const STATUS_STOPPED = 41;
+
+    static protected $CPUPeriod = 100000;
 
     static public array $filter = [
         'id', 'uuid', 'name', 'is_suspended', 'cpu', 'memory', 'swap', 'disk', 'image'
@@ -46,6 +49,15 @@ class Instance
     ) {
     }
 
+    public function getBinds()
+    {
+        $binds = [];
+        foreach ($this->app->data_path as $target => $source) {
+            $binds[] = Instance::GetBasePath() . '/' . $this->uuid . $source . ':' . $target;
+        }
+        return $binds;
+    }
+
     public function wait()
     {
         $client = new Docker();
@@ -54,6 +66,37 @@ class Instance
 
     public function start()
     {
+        $client = new Docker();
+        $client->post('/containers/create?name=' . $this->uuid, [
+            'User' => 'root',   // TODO 更改 Docker 运行用户
+            'Tty' => true,
+            'AttachStdin' => true,
+            'OpenStdin' => true,
+            'Image' => $this->image,
+            'Env' => [
+                // TODO
+            ],
+            'WorkingDir' => $this->app->working_path,
+            'Labels' => [
+                'Service' => 'PowerPanel'
+            ],
+            'HostConfig' => [
+                'AutoRemove' => true,
+                'Binds' => $this->getBinds(),
+                'Memory' => $this->memory * 1024 * 1024,
+                'MemorySwap' => ($this->memory + $this->swap) * 1024 * 1024,
+                'CpuPeriod' => self::$CPUPeriod,
+                'CpuQuota' => self::$CPUPeriod * $this->cpu / 100,
+                'Dns' => Config::Get()['docker']['dns'],
+                // 'PortBindings' => array_map(fn (Allocation $allocation) => $allocation->getBindings(), $this->allocations)   // TODO
+            ]
+        ] + ($this->app->startup ? ['Cmd' => $this->app->startup] : []));
+        $client->post('/containers/' . $this->uuid . '/start', []);
+
+        $this->status = self::STATUS_STARTING;
+        Event::Dispatch(
+            new InstanceStatusUpdateEvent($this, $this->status)
+        );
     }
 
     public function stop($wait = true)
@@ -82,6 +125,18 @@ class Instance
 
     public function kill()
     {
+        $client = new Docker();
+        $client->post('/containers/' . $this->uuid . '/kill', []);
+
+        $this->status = self::STATUS_STOPPED;
+        Event::Dispatch(
+            new InstanceStatusUpdateEvent($this, $this->status)
+        );
+    }
+
+    static public function GetBasePath()
+    {
+        return Config::Get()['storage_path']['instance_data'];
     }
 
     static public function Get(string $uuid, bool $refresh = true)
