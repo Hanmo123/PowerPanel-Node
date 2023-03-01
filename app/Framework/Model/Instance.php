@@ -7,6 +7,8 @@ use app\Framework\Client\Panel;
 use app\Framework\Logger;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceListedEvent;
+use app\Framework\Plugin\Event\InstanceStatusEvent;
+use app\plugins\InstanceListener\StdioHandler;
 
 class Instance
 {
@@ -44,8 +46,47 @@ class Instance
     ) {
     }
 
-    static public function Get(string $uuid)
+    public function wait()
     {
+        $client = new Docker();
+        return $client->post('/containers/' . $this->uuid . '/wait', []);
+    }
+
+    public function start()
+    {
+    }
+
+    public function stop($wait = true)
+    {
+        StdioHandler::Write($this, $this->app->exit . PHP_EOL);
+
+        // Stopping 事件
+        $this->status = self::STATUS_STOPPING;
+        Event::Dispatch(
+            new InstanceStatusEvent($this, $this->status)
+        );
+
+        // Stopped 事件
+        if ($wait) {
+            $this->wait();
+            $this->status = self::STATUS_STOPPED;
+            Event::Dispatch(
+                new InstanceStatusEvent($this, $this->status)
+            );
+        }
+    }
+
+    public function restart()
+    {
+    }
+
+    public function kill()
+    {
+    }
+
+    static public function Get(string $uuid, bool $refresh = true)
+    {
+        // TODO
         return self::$list[$uuid];
     }
 

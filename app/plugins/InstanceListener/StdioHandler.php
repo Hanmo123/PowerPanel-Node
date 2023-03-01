@@ -45,6 +45,8 @@ class StdioHandler
 
                 if ($frame instanceof CloseFrame || is_string($frame)) {
                     // 连接断开返回 CloseFrame 或空字符串
+                    Logger::Get('InstanceListener')->info('实例 ' . $instance->uuid . ' 的监听连接已断开');
+                    // TODO 异常断开判断
                     $client->close();
                     break;
                 }

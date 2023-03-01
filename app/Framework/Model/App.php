@@ -22,7 +22,8 @@ class App
         public string $startup,
         public bool $skip_install,
         public string $install_image,
-        public string $install_script
+        public string $install_script,
+        public string $exit = 'exit',    // TODO
     ) {
         $this->data_path = json_decode($data_path, true);
         $this->images = json_decode($images, true);
