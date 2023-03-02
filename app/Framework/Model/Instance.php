@@ -58,6 +58,12 @@ class Instance
         return $binds;
     }
 
+    public function getLog()
+    {
+        $client = new Docker();
+        return $client->get('/containers/' . $this->uuid . '/logs?tail=500&stdout=1&stderr=1');
+    }
+
     public function wait()
     {
         $client = new Docker();

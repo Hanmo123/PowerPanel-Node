@@ -46,4 +46,9 @@ class Response
     {
         $this->attributes[$key] = $value;
     }
+
+    public function __isset(string $key)
+    {
+        return isset($this->attributes[$key]);
+    }
 }
