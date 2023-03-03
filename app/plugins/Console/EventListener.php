@@ -12,16 +12,17 @@ use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectedEvent;
 use app\Framework\Plugin\Event\WebSocketConnectEvent;
 use app\Framework\Plugin\Event\WebSocketMessageEvent;
-use app\Framework\Plugin\EventListener;
+use app\Framework\Plugin\EventListener as PluginEventListener;
 use app\Framework\Plugin\EventPriority;
 use app\Framework\Wrapper\Response;
 use app\plugins\Console\Event\InstancePowerEvent;
+use app\plugins\InstanceListener\Event\InstanceStatsUpdateEvent;
 use app\plugins\InstanceListener\Event\InstanceStdinEvent;
 use app\plugins\InstanceListener\Event\InstanceStdoutEvent;
 use app\plugins\InstanceListener\StdioHandler;
 use app\plugins\Token\Token;
 
-class WebSocketEventHandler extends EventListener
+class EventListener extends PluginEventListener
 {
     /**
      * @var array<Response>
@@ -140,6 +141,19 @@ class WebSocketEventHandler extends EventListener
             $conn->send([
                 'type' => 'status',
                 'data' => $ev->status
+            ]);
+        }
+    }
+    
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onInstanceStatsUpdate(InstanceStatsUpdateEvent $ev)
+    {
+        foreach (self::$connections as $conn) {
+            if ($conn->token->data['instance'] != $ev->instance->uuid) continue;
+            if (!$conn->token->isPermit('console.stats')) return;
+            $conn->send([
+                'type' => 'stats',
+                'data' => $ev->stats->toArray()
             ]);
         }
     }

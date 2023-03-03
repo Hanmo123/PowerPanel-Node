@@ -40,7 +40,7 @@ class InstanceStats
     public function toArray()
     {
         return [
-            'cpu' => round($this->cpu, 1),
+            'cpu' => round($this->cpu, 2),
             'memory' => $this->memory,
             'disk' => $this->disk
         ];
