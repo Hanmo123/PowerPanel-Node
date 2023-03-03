@@ -17,13 +17,13 @@ class StdioHandler
     /**
      * @var array<Client>
      */
-    static array $list;
+    static protected array $list;
 
     static public function Init()
     {
         foreach (Instance::$list as $instance) {
             if ($instance->status != Instance::STATUS_RUNNING) continue;
-            StdioHandler::Attach($instance);
+            self::Attach($instance);
         }
     }
 
@@ -33,9 +33,9 @@ class StdioHandler
             $logger = Logger::Get('InstanceListener');
 
             if (isset(self::$list[$instance->uuid]))
-                return $logger->info('实例 ' . $instance->uuid . ' 已在监听');
+                return $logger->info('实例 ' . $instance->uuid . ' 标准 IO 已在监听');
 
-            $logger->debug('实例 ' . $instance->uuid . ' 开始监听');
+            $logger->debug('实例 ' . $instance->uuid . ' 标准 IO 开始监听');
 
             // 触发 InstanceAttach 事件
             if (!Event::Dispatch(
@@ -51,7 +51,7 @@ class StdioHandler
 
                 if ($frame instanceof CloseFrame || is_string($frame)) {
                     // 连接断开返回 CloseFrame 或空字符串
-                    Logger::Get('InstanceListener')->info('实例 ' . $instance->uuid . ' 的监听连接已断开');
+                    Logger::Get('InstanceListener')->info('实例 ' . $instance->uuid . ' 的标准 IO 监听连接已断开');
                     // TODO 异常断开判断
                     $client->close();
                     break;

@@ -10,6 +10,7 @@ use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
 use app\plugins\InstanceListener\StdioHandler;
+use stdClass;
 
 class Instance
 {
@@ -32,6 +33,8 @@ class Instance
 
     public int $status = self::STATUS_STOPPED;
 
+    public InstanceStats $stats;
+
     public function __construct(
         public int $id,
         public string $uuid,
@@ -47,6 +50,7 @@ class Instance
         public Allocation $allocation,
         public array $allocations
     ) {
+        $this->stats = new InstanceStats();
     }
 
     public function getBinds()

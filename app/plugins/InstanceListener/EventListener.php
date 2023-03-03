@@ -14,11 +14,15 @@ class EventListener extends PluginEventListener
     public function onInstanceListed(InstanceListedEvent $ev)
     {
         StdioHandler::Init();
+        StatsHandler::Init();
     }
 
     #[EventPriority(EventPriority::NORMAL)]
     public function onInstanceStatusUpdate(InstanceStatusUpdateEvent $ev)
     {
-        if ($ev->status == Instance::STATUS_STARTING) StdioHandler::Attach($ev->instance);
+        if ($ev->status == Instance::STATUS_STARTING) {
+            StdioHandler::Attach($ev->instance);
+            StatsHandler::Listen($ev->instance);
+        }
     }
 }
