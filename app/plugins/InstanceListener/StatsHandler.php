@@ -3,11 +3,16 @@
 namespace app\plugins\InstanceListener;
 
 use app\Framework\Client\Docker\Stats;
+use app\Framework\Client\Panel;
 use app\Framework\Logger;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
+use app\Framework\Util\Config;
 use app\plugins\InstanceListener\Event\InstanceStatsUpdateEvent;
 use CurlHandle;
+use Swoole\Timer;
+
+use function Co\go;
 
 class StatsHandler
 {
@@ -19,6 +24,9 @@ class StatsHandler
             if ($instance->status != Instance::STATUS_RUNNING) continue;
             self::Listen($instance);
         }
+
+        go([self::class, 'Push']);
+        Timer::tick(Config::Get()['report_stats_interval'] * 1000, [self::class, 'Push']);
     }
 
     static public function Listen(Instance $instance)
@@ -43,5 +51,20 @@ class StatsHandler
 
             $logger->info('实例 ' . $instance->uuid . ' 的状态监听连接已断开');
         });
+    }
+
+    static public function Push()
+    {
+        Logger::Get('InstanceListener')->info('正在上报容器统计数据...');
+        $client = new Panel();
+        $client->put('/api/node/ins/stats', [
+            'data' => array_map(function (Instance $instance) {
+                return [
+                    'id' => $instance->id,
+                    'status' => $instance->status,
+                    'resources' => $instance->stats->toArray()
+                ];
+            }, Instance::$list)
+        ]);
     }
 }

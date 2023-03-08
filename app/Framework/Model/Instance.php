@@ -10,7 +10,6 @@ use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
 use app\plugins\InstanceListener\StdioHandler;
-use stdClass;
 
 class Instance
 {
@@ -198,18 +197,5 @@ class Instance
         Event::Dispatch(
             new InstanceListedEvent()
         );
-    }
-
-    /**
-     * 上报容器统计数据
-     *
-     * @param array $stats
-     * @return array 储存空间超限的实例 UUID 列表
-     */
-    static public function ReportStats(array $stats): array
-    {
-        return (new Panel())->put('/api/node/ins/stats', [
-            'data' => $stats
-        ])['data'];
     }
 }
