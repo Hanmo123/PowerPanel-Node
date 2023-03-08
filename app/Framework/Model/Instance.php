@@ -64,7 +64,8 @@ class Instance
     public function getLog()
     {
         $client = new Docker();
-        return $client->get('/containers/' . $this->uuid . '/logs?tail=500&stdout=1&stderr=1');
+        $log = $client->get('/containers/' . $this->uuid . '/logs?tail=500&stdout=1&stderr=1', $code);
+        return $code == 200 ? $log : false;
     }
 
     public function wait()

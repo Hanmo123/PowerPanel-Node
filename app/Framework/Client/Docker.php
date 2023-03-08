@@ -22,16 +22,17 @@ class Docker
             : new Client($this->socket);
     }
 
-    public function get(string $url)
+    public function get(string $url, &$code = NULL)
     {
         $client = $this->getClient();
         $client->setHeaders(['Host' => 'localhost']);
         $client->get($url);
         $client->close();
+        $code = $client->getStatusCode();
         return $client->body;
     }
 
-    public function post(string $url, array $data)
+    public function post(string $url, array $data, &$code = NULL)
     {
         $client = $this->getClient();
         $client->setHeaders([
@@ -40,6 +41,7 @@ class Docker
         ]);
         $client->post($url, json_encode($data));
         $client->close();
+        $code = $client->getStatusCode();
         return $client->body;
     }
 }
