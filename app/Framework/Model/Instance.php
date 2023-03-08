@@ -131,6 +131,8 @@ class Instance
 
     public function restart()
     {
+        $this->stop(true);
+        $this->start();
     }
 
     public function kill()

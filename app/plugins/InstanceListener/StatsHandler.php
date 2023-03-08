@@ -49,7 +49,7 @@ class StatsHandler
                 )) return;
             });
 
-            $logger->info('实例 ' . $instance->uuid . ' 的状态监听连接已断开');
+            $logger->debug('实例 ' . $instance->uuid . ' 的状态监听连接已断开');
         });
     }
 
