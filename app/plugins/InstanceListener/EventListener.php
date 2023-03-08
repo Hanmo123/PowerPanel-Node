@@ -2,6 +2,7 @@
 
 namespace app\plugins\InstanceListener;
 
+use app\Framework\Client\Panel;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
@@ -20,9 +21,20 @@ class EventListener extends PluginEventListener
     #[EventPriority(EventPriority::NORMAL)]
     public function onInstanceStatusUpdate(InstanceStatusUpdateEvent $ev)
     {
+        $instance = $ev->instance;
         if ($ev->status == Instance::STATUS_STARTING) {
-            StdioHandler::Attach($ev->instance);
-            StatsHandler::Listen($ev->instance);
+            StdioHandler::Attach($instance);
+            StatsHandler::Listen($instance);
         }
+        $client = new Panel();
+        $client->put('/api/node/ins/stats', [
+            'data' => [
+                $instance->uuid => [
+                    'id' => $instance->id,
+                    'status' => $instance->status,
+                    'resources' => $instance->stats->toArray()
+                ]
+            ]
+        ]);
     }
 }
