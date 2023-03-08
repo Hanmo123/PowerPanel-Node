@@ -22,10 +22,14 @@ class EventListener extends PluginEventListener
     public function onInstanceStatusUpdate(InstanceStatusUpdateEvent $ev)
     {
         $instance = $ev->instance;
+        
         if ($ev->status == Instance::STATUS_STARTING) {
             StdioHandler::Attach($instance);
             StatsHandler::Listen($instance);
+        } elseif ($ev->status == Instance::STATUS_STOPPED) {
+            $instance->stats->reset();
         }
+        
         $client = new Panel();
         $client->put('/api/node/ins/stats', [
             'data' => [

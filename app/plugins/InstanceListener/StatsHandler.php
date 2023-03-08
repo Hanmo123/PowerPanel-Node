@@ -55,10 +55,22 @@ class StatsHandler
 
     static public function Push()
     {
-        Logger::Get('InstanceListener')->info('正在上报容器统计数据...');
+        Logger::Get('InstanceListener')->debug('正在扫描实例存储用量...');
+        // 在扫描超大文件夹时使用 du 命令耗时较 PHP 递归迭代可减少 ~50%
+        $chart = [];
+        $dataPath = Config::Get()['storage_path']['instance_data'];
+        exec('du -s ' . escapeshellarg($dataPath) . '/*', $return);
+        foreach ($return as $row) {
+            [$KBytes, $path] = explode("\t", $row);
+            $uuid = str_replace($dataPath . '/', '', $path);
+            $chart[$uuid] = $KBytes * 1024;
+        }
+
+        Logger::Get('InstanceListener')->info('正在上报实例统计数据...');
         $client = new Panel();
         $client->put('/api/node/ins/stats', [
-            'data' => array_map(function (Instance $instance) {
+            'data' => array_map(function (Instance $instance) use($chart) {
+                $instance->stats->disk = $chart[$instance->uuid] ?? 0;
                 return [
                     'id' => $instance->id,
                     'status' => $instance->status,

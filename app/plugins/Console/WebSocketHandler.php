@@ -26,6 +26,14 @@ class WebSocketHandler
             ]);
         }
 
+        // 发送实例当前资源占用情况
+        if ($token->isPermit('console.stats')) {
+            $response->send([
+                'type' => 'stats',
+                'data' => $instance->stats->toArray()
+            ]);
+        }
+
         // 发送实例日志
         if ($token->isPermit('console.history')) {
             $response->send([

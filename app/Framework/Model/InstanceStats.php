@@ -37,6 +37,12 @@ class InstanceStats
         $this->memory = $chunk['memory_stats']['usage'] - ($chunk['memory_stats']['stats']['cache'] ?? 0);
     }
 
+    public function reset()
+    {
+        $this->cpu = 0;
+        $this->memory = 0;
+    }
+
     public function toArray()
     {
         return [
