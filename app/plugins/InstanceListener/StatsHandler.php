@@ -59,11 +59,11 @@ class StatsHandler
         // 在扫描超大文件夹时使用 du 命令耗时较 PHP 递归迭代可减少 ~50%
         $chart = [];
         $dataPath = Config::Get()['storage_path']['instance_data'];
-        exec('du -s ' . escapeshellarg($dataPath) . '/*', $return);
+        exec('du -sb --apparent-size ' . escapeshellarg($dataPath) . '/*', $return);
         foreach ($return as $row) {
-            [$KBytes, $path] = explode("\t", $row);
+            [$bytes, $path] = explode("\t", $row);
             $uuid = str_replace($dataPath . '/', '', $path);
-            $chart[$uuid] = $KBytes * 1024;
+            $chart[$uuid] = $bytes;
         }
 
         Logger::Get('InstanceListener')->info('正在上报实例统计数据...');
