@@ -17,6 +17,9 @@ class Server
 
         Logger::Get()->info('服务器已启动在 http://0.0.0.0:' . Config::Get()['node_port']);
         $server = new HttpServer('0.0.0.0', Config::Get()['node_port']);
+        $server->set([
+            'package_max_length' => Config::Get()['max_package_size']
+        ]);
 
         $server->handle('/',     [HttpHandler::class, 'onRequest']);
         $server->handle('/ws',   [WebSocketHandler::class, 'onConnect']);

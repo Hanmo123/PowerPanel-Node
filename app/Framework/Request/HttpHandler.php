@@ -42,7 +42,8 @@ class HttpHandler
                     }
 
                     // 请求调用并返回
-                    $res->end(json_encode(call_user_func($routeInfo[1], $req, $res, ...$routeInfo[2]), JSON_UNESCAPED_UNICODE));
+                    if (!$return = call_user_func($routeInfo[1], $req, $res, ...$routeInfo[2])) return;
+                    $res->end(json_encode($return, JSON_UNESCAPED_UNICODE));
                     break;
             }
         } catch (\Throwable $th) {

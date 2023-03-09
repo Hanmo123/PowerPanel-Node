@@ -9,6 +9,7 @@ use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
+use app\plugins\FileManager\FileSystemHandler;
 use app\plugins\InstanceListener\StdioHandler;
 
 class Instance
@@ -144,6 +145,11 @@ class Instance
         Event::Dispatch(
             new InstanceStatusUpdateEvent($this, $this->status)
         );
+    }
+
+    public function getFileSystemHandler()
+    {
+        return new FileSystemHandler($this);
     }
 
     static public function GetBasePath()
