@@ -147,6 +147,11 @@ class Instance
         );
     }
 
+    public function reinstall()
+    {
+        // TODO
+    }
+
     public function getFileSystemHandler()
     {
         return new FileSystemHandler($this);
@@ -157,9 +162,32 @@ class Instance
         return Config::Get()['storage_path']['instance_data'];
     }
 
+    static public function fromAttributes(array $attributes)
+    {
+        return new self(
+            ...array_intersect_key($attributes, array_flip(self::$filter)),
+            ...[
+                'app' => new App(...array_intersect_key($attributes['app'], array_flip(App::$filter))),
+                'version' => new Version(...array_intersect_key($attributes['version'], array_flip(Version::$filter))),
+                'allocation' => new Allocation(...array_intersect_key($attributes['allocation'], array_flip(Allocation::$filter))),
+                'allocations' => array_map(function ($allocation) {
+                    return new Allocation(...array_intersect_key($allocation, array_flip(Allocation::$filter)));
+                }, $attributes['allocations'])
+            ]
+        );
+    }
+
     static public function Get(string $uuid, bool $refresh = true)
     {
-        // TODO
+        if ($refresh) {
+            $client = new Panel();
+            $attributes = $client->post('/api/node/ins/detail', [
+                'attributes' => [
+                    'uuid' => $uuid
+                ]
+            ])['attributes'];
+            self::$list[$attributes['uuid']] = self::fromAttributes($attributes);
+        }
         return self::$list[$uuid];
     }
 
@@ -167,17 +195,7 @@ class Instance
     {
         $client = new Panel();
         foreach ($client->get('/api/node/ins')['attributes']['list'] as $data) {
-            self::$list[$data['uuid']] = new self(
-                ...array_intersect_key($data, array_flip(self::$filter)),
-                ...[
-                    'app' => new App(...array_intersect_key($data['app'], array_flip(App::$filter))),
-                    'version' => new Version(...array_intersect_key($data['version'], array_flip(Version::$filter))),
-                    'allocation' => new Allocation(...array_intersect_key($data['allocation'], array_flip(Allocation::$filter))),
-                    'allocations' => array_map(function ($allocation) {
-                        return new Allocation(...array_intersect_key($allocation, array_flip(Allocation::$filter)));
-                    }, $data['allocations'])
-                ]
-            );
+            self::$list[$data['uuid']] = self::fromAttributes($data);
         }
     }
 
