@@ -147,9 +147,53 @@ class Instance
         );
     }
 
-    public function reinstall()
+    public function reinstall($wait = true)
     {
-        // TODO
+        // TODO 判断实例状态
+        $script = Config::Get()['storage_path']['scripts'] . '/' . $this->uuid . '.sh';
+
+        file_put_contents($script, $this->app->install_script);
+
+        $binds = $this->getBinds();
+        $binds[] = $script . ':/install.sh';
+
+        $client = new Docker();
+        $client->post('/containers/create?name=' . $this->uuid, [
+            'User' => 'root',   // TODO 更改 Docker 运行用户
+            'Tty' => true,
+            'Image' => $this->app->install_image,
+            'Env' => [
+                // TODO
+            ],
+            'WorkingDir' => $this->app->working_path,
+            'Labels' => [
+                'Service' => 'PowerPanel'
+            ],
+            'HostConfig' => [
+                'AutoRemove' => true,
+                'Binds' => $binds,
+                'Memory' => 1 * 1024 * 1024 * 1024,
+                'MemorySwap' => 1 * 1024 * 1024 * 1024,
+                'CpuPeriod' => self::$CPUPeriod,
+                'CpuQuota' => self::$CPUPeriod,
+                'Dns' => Config::Get()['docker']['dns'],
+            ],
+            'Cmd' => ['sh', '/install.sh']
+        ]);
+        $client->post('/containers/' . $this->uuid . '/start', []);
+
+        $this->status = self::STATUS_INSTALLING;
+        Event::Dispatch(
+            new InstanceStatusUpdateEvent($this, $this->status)
+        );
+
+        if ($wait) {
+            $this->wait();
+            $this->status = self::STATUS_STOPPED;
+            Event::Dispatch(
+                new InstanceStatusUpdateEvent($this, $this->status)
+            );
+        }
     }
 
     public function getFileSystemHandler()
