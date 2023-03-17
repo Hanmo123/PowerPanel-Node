@@ -16,6 +16,7 @@ use app\Framework\Plugin\EventListener as PluginEventListener;
 use app\Framework\Plugin\EventPriority;
 use app\Framework\Wrapper\Response;
 use app\plugins\Console\Event\InstancePowerEvent;
+use app\plugins\InstanceListener\Event\InstanceMessageEvent;
 use app\plugins\InstanceListener\Event\InstanceStatsUpdateEvent;
 use app\plugins\InstanceListener\Event\InstanceStdinEvent;
 use app\plugins\InstanceListener\Event\InstanceStdoutEvent;
@@ -76,6 +77,20 @@ class EventListener extends PluginEventListener
             if (!$conn->token->isPermit('console.read')) return;
             $conn->send([
                 'type' => 'stdout',
+                'data' => $base64
+            ]);
+        }
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onInstanceMessage(InstanceMessageEvent $ev)
+    {
+        $base64 = $ev->data;
+        foreach (self::$connections as $conn) {
+            if ($conn->token->data['instance'] != $ev->instance->uuid) continue;
+            if (!$conn->token->isPermit('console.read')) return;
+            $conn->send([
+                'type' => 'message',
                 'data' => $base64
             ]);
         }

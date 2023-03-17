@@ -11,7 +11,10 @@ use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
 use app\plugins\FileManager\FileSystemHandler;
 use app\plugins\InstanceInstaller\Exception\InstallSkippedException;
+use app\plugins\InstanceInstaller\Exception\InstallStatusConflict;
 use app\plugins\InstanceListener\StdioHandler;
+
+use function Co\go;
 
 class Instance
 {
@@ -110,7 +113,7 @@ class Instance
                 'CpuPeriod' => self::$CPUPeriod,
                 'CpuQuota' => self::$CPUPeriod * $this->cpu / 100,
                 'Dns' => Config::Get()['docker']['dns'],
-                'PortBindings' => $this->getBindings()   // TODO
+                'PortBindings' => $this->getBindings()
             ]
         ] + ($this->app->startup ? ['Cmd' => $this->app->startup] : []));
         $client->post('/containers/' . $this->uuid . '/start', []);
@@ -132,18 +135,23 @@ class Instance
         );
 
         // Stopped 事件
-        if ($wait) {
+        $next = function () {
             $this->wait();
             $this->status = self::STATUS_STOPPED;
             Event::Dispatch(
                 new InstanceStatusUpdateEvent($this, $this->status)
             );
-        }
+        };
+
+        if ($wait)
+            $next();
+        else
+            go($next);
     }
 
     public function restart()
     {
-        $this->stop(true);
+        $this->stop();
         $this->start();
     }
 
@@ -163,7 +171,9 @@ class Instance
         if ($this->app->skip_install)
             throw new InstallSkippedException();
 
-        // TODO 判断实例状态
+        if ($this->status !== self::STATUS_STOPPED)
+            throw new InstallStatusConflict();
+
         $script = Config::Get()['storage_path']['scripts'] . '/' . $this->uuid . '.sh';
 
         file_put_contents($script, $this->app->install_script);
@@ -199,13 +209,18 @@ class Instance
             new InstanceStatusUpdateEvent($this, $this->status)
         );
 
-        if ($wait) {
+        $next = function () {
             $this->wait();
             $this->status = self::STATUS_STOPPED;
             Event::Dispatch(
                 new InstanceStatusUpdateEvent($this, $this->status)
             );
-        }
+        };
+
+        if ($wait)
+            $next();
+        else
+            go($next);
     }
 
     public function getFileSystemHandler()
@@ -248,13 +263,23 @@ class Instance
     static public function Get(string $uuid, bool $refresh = true)
     {
         if ($refresh) {
+            $current = self::$list[$uuid] ?? false;
+
             $client = new Panel();
             $attributes = $client->post('/api/node/ins/detail', [
                 'attributes' => [
                     'uuid' => $uuid
                 ]
             ])['attributes'];
-            self::$list[$attributes['uuid']] = self::fromAttributes($attributes);
+            $latest = self::fromAttributes($attributes);
+
+            if ($current) {
+                // 存在旧对象 从旧对象合并状态参数
+                $latest->status = $current->status;
+                $latest->stats = $current->stats;
+            }
+
+            self::$list[$attributes['uuid']] = $latest;
         }
         return self::$list[$uuid];
     }
