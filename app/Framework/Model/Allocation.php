@@ -16,8 +16,11 @@ class Allocation
     ) {
     }
 
-    public function getBindings()
+    public function getBinding()
     {
-        return [];
+        return [
+            'HostIp' => $this->ip,
+            'HostPort' => strval($this->port)
+        ];
     }
 }

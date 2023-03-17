@@ -16,7 +16,12 @@ class Controller
     static public function Reinstall(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid']);
-        go(fn () => $instance->reinstall());
+        go(function () use ($instance) {
+            try {
+                $instance->reinstall();
+            } catch (\Throwable $th) {
+            }
+        });
         return ['code' => 200];
     }
 }

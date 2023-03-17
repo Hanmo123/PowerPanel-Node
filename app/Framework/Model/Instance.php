@@ -10,6 +10,7 @@ use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
 use app\plugins\FileManager\FileSystemHandler;
+use app\plugins\InstanceInstaller\Exception\InstallSkippedException;
 use app\plugins\InstanceListener\StdioHandler;
 
 class Instance
@@ -62,6 +63,16 @@ class Instance
         return $binds;
     }
 
+    public function getBindings()
+    {
+        $bindings = [];
+        /** @var Allocation $allocation */
+        foreach ($this->allocations as $allocation) {
+            $bindings[$allocation->port . '/tcp'] = $bindings[$allocation->port . '/udp'] = [$allocation->getBinding()];
+        }
+        return $bindings;
+    }
+
     public function getLog()
     {
         $client = new Docker();
@@ -77,6 +88,8 @@ class Instance
 
     public function start()
     {
+        // TODO 拉取镜像
+
         $client = new Docker();
         $client->post('/containers/create?name=' . $this->uuid, [
             'User' => 'root',   // TODO 更改 Docker 运行用户
@@ -84,9 +97,7 @@ class Instance
             'AttachStdin' => true,
             'OpenStdin' => true,
             'Image' => $this->image,
-            'Env' => [
-                // TODO
-            ],
+            'Env' => $this->getEnv(),
             'WorkingDir' => $this->app->working_path,
             'Labels' => [
                 'Service' => 'PowerPanel'
@@ -99,7 +110,7 @@ class Instance
                 'CpuPeriod' => self::$CPUPeriod,
                 'CpuQuota' => self::$CPUPeriod * $this->cpu / 100,
                 'Dns' => Config::Get()['docker']['dns'],
-                // 'PortBindings' => array_map(fn (Allocation $allocation) => $allocation->getBindings(), $this->allocations)   // TODO
+                'PortBindings' => $this->getBindings()   // TODO
             ]
         ] + ($this->app->startup ? ['Cmd' => $this->app->startup] : []));
         $client->post('/containers/' . $this->uuid . '/start', []);
@@ -149,6 +160,9 @@ class Instance
 
     public function reinstall($wait = true)
     {
+        if ($this->app->skip_install)
+            throw new InstallSkippedException();
+
         // TODO 判断实例状态
         $script = Config::Get()['storage_path']['scripts'] . '/' . $this->uuid . '.sh';
 
@@ -162,9 +176,7 @@ class Instance
             'User' => 'root',   // TODO 更改 Docker 运行用户
             'Tty' => true,
             'Image' => $this->app->install_image,
-            'Env' => [
-                // TODO
-            ],
+            'Env' => $this->getEnv(),
             'WorkingDir' => $this->app->working_path,
             'Labels' => [
                 'Service' => 'PowerPanel'
@@ -199,6 +211,18 @@ class Instance
     public function getFileSystemHandler()
     {
         return new FileSystemHandler($this);
+    }
+
+    public function getEnv()
+    {
+        return [
+            'TZ=Asia/Shanghai',
+            'SERVER_MEMORY=' . $this->memory,
+            'SERVER_IP=' . $this->allocation->ip,
+            'SERVER_PORT=' . $this->allocation->port,
+            'SERVER_VERSION=' . $this->version->version
+        ];
+        // TODO 获取实例变量
     }
 
     static public function GetBasePath()
