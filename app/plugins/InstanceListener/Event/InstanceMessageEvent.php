@@ -9,7 +9,6 @@ use Swoole\Coroutine\Http\Client;
 class InstanceMessageEvent extends EventBase
 {
     public function __construct(
-        public Client $client,
         public Instance $instance,
         public mixed $data
     ) {

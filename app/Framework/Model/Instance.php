@@ -4,6 +4,7 @@ namespace app\Framework\Model;
 
 use app\Framework\Client\Docker;
 use app\Framework\Client\Panel;
+use app\Framework\Exception\InstanceStartException;
 use app\Framework\Logger;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceListedEvent;
@@ -92,6 +93,9 @@ class Instance
     public function start()
     {
         // TODO 拉取镜像
+
+        if ($this->status !== self::STATUS_STOPPED)
+            throw new InstanceStartException('实例未处于停止状态', 400);
 
         $client = new Docker();
         $client->post('/containers/create?name=' . $this->uuid, [

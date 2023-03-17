@@ -129,13 +129,22 @@ class EventListener extends PluginEventListener
                     )
                 )) return;
                 go(function () use ($instance, $action) {
-                    call_user_func([$instance, $action]);
-                    Logger::Get('Console')->info('实例 ' . $instance->uuid . ' 已' . [
+                    $actionText = [
                         'start'     => '启动',
                         'restart'   => '重启',
                         'stop'      => '关闭',
                         'kill'      => '终止'
-                    ][$action]);
+                    ][$action];
+
+                    try {
+                        call_user_func([$instance, $action]);
+                        Logger::Get('Console')->info('实例 ' . $instance->uuid . ' 已' . $actionText);
+                    } catch (\Throwable $th) {
+                        Logger::Get('Console')->error('实例 ' . $instance->uuid . ' ' . ($msg = $actionText . '失败: ' . $th->getMessage()));
+                        if (Event::Dispatch(
+                            new InstanceMessageEvent($instance, $msg)
+                        )) return;
+                    }
                 });
                 break;
         }
@@ -159,7 +168,7 @@ class EventListener extends PluginEventListener
             ]);
         }
     }
-    
+
     #[EventPriority(EventPriority::NORMAL)]
     public function onInstanceStatsUpdate(InstanceStatsUpdateEvent $ev)
     {
