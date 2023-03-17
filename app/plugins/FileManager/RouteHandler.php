@@ -5,6 +5,7 @@ namespace app\plugins\FileManager;
 use app\Framework\Exception\TokenInvalidException;
 use app\Framework\Model\Instance;
 use app\Framework\Request\Middleware;
+use app\Framework\Request\Middleware\PanelAuthMiddleware;
 use app\plugins\FileManager\Exception\PathTraversalException;
 use app\plugins\FileManager\Middleware\CORSMiddleware;
 use app\plugins\FileManager\Middleware\TokenAuthMiddleware;
@@ -23,6 +24,7 @@ class RouteHandler
         $response->end();
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function GetList(Request $request, Response $response)
     {
         try {
@@ -36,6 +38,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Rename(Request $request, Response $response)
     {
         try {
@@ -52,6 +55,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Delete(Request $request, Response $response)
     {
         try {
@@ -69,6 +73,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Create(Request $request, Response $response)
     {
         try {
@@ -86,6 +91,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Read(Request $request, Response $response)
     {
         try {
@@ -102,6 +108,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Save(Request $request, Response $response)
     {
         try {
@@ -118,6 +125,7 @@ class RouteHandler
         }
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function GetPermission(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -130,6 +138,7 @@ class RouteHandler
         ];
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function SetPermission(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -145,6 +154,7 @@ class RouteHandler
         ];
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Compress(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -157,6 +167,7 @@ class RouteHandler
         return ['code' => 200];
     }
 
+    #[Middleware(PanelAuthMiddleware::class)]
     static public function Decompress(Request $request, Response $response)
     {;
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
