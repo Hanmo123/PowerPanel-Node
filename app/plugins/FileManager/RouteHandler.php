@@ -8,6 +8,7 @@ use app\Framework\Request\Middleware;
 use app\Framework\Request\Middleware\PanelAuthMiddleware;
 use app\plugins\FileManager\Exception\PathTraversalException;
 use app\plugins\FileManager\Middleware\CORSMiddleware;
+use app\plugins\FileManager\Middleware\InstanceValidateMiddleware;
 use app\plugins\FileManager\Middleware\TokenAuthMiddleware;
 use app\plugins\Token\Token;
 use League\Flysystem\PathTraversalDetected;
@@ -38,7 +39,7 @@ class RouteHandler
         }
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Rename(Request $request, Response $response)
     {
         try {
@@ -73,7 +74,7 @@ class RouteHandler
         }
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Create(Request $request, Response $response)
     {
         try {
@@ -108,7 +109,7 @@ class RouteHandler
         }
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Save(Request $request, Response $response)
     {
         try {
@@ -138,7 +139,7 @@ class RouteHandler
         ];
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function SetPermission(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -154,7 +155,7 @@ class RouteHandler
         ];
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Compress(Request $request, Response $response)
     {
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -167,7 +168,7 @@ class RouteHandler
         return ['code' => 200];
     }
 
-    #[Middleware(PanelAuthMiddleware::class)]
+    #[Middleware(PanelAuthMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Decompress(Request $request, Response $response)
     {;
         $instance = Instance::Get($request->post['attributes']['uuid'], false);
@@ -177,7 +178,7 @@ class RouteHandler
         return ['code' => 200];
     }
 
-    #[Middleware(TokenAuthMiddleware::class, CORSMiddleware::class)]
+    #[Middleware(TokenAuthMiddleware::class, CORSMiddleware::class, InstanceValidateMiddleware::class)]
     static public function Upload(Request $request, Response $response)
     {
         $token = Token::Get($request->get['token']);
