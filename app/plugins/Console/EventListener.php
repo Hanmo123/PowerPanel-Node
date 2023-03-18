@@ -7,6 +7,8 @@ use app\Framework\Exception\TokenNotFoundException;
 use app\Framework\Logger;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\ImagePulledEvent;
+use app\Framework\Plugin\Event\ImagePullEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Plugin\Event\WebSocketCloseEvent;
 use app\Framework\Plugin\Event\WebSocketConnectedEvent;
@@ -188,6 +190,22 @@ class EventListener extends PluginEventListener
     {
         Event::Dispatch(
             new InstanceMessageEvent($ev->instance, '实例存储空间超限 正在关机')
+        );
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onImagePull(ImagePullEvent $ev)
+    {
+        Event::Dispatch(
+            new InstanceMessageEvent($ev->instance, '正在拉取镜像 ' . $ev->image)
+        );
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onImagePulled(ImagePulledEvent $ev)
+    {
+        Event::Dispatch(
+            new InstanceMessageEvent($ev->instance, '镜像拉取完成 正在启动')
         );
     }
 }

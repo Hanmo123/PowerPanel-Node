@@ -3,10 +3,14 @@
 namespace app\Framework\Model;
 
 use app\Framework\Client\Docker;
+use app\Framework\Client\Docker\EventStream;
 use app\Framework\Client\Panel;
 use app\Framework\Exception\InstanceStartException;
 use app\Framework\Logger;
 use app\Framework\Plugin\Event;
+use app\Framework\Plugin\Event\ImagePulledEvent;
+use app\Framework\Plugin\Event\ImagePullEvent;
+use app\Framework\Plugin\Event\ImagePullingEvent;
 use app\Framework\Plugin\Event\InstanceListedEvent;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\Framework\Util\Config;
@@ -14,6 +18,7 @@ use app\plugins\FileManager\FileSystemHandler;
 use app\plugins\InstanceInstaller\Exception\InstallSkippedException;
 use app\plugins\InstanceInstaller\Exception\InstallStatusConflict;
 use app\plugins\InstanceListener\StdioHandler;
+use CurlHandle;
 
 use function Co\go;
 
@@ -92,14 +97,30 @@ class Instance
 
     public function start()
     {
-        // TODO 拉取镜像
-
         if ($this->status !== self::STATUS_STOPPED)
             throw new InstanceStartException('实例未处于停止状态', 400);
         if ($this->isDiskExceed())
             throw new InstanceStartException('实例存储空间超限 无法启动', 400);
         if ($this->is_suspended)
             throw new InstanceStartException('实例已被暂停 无法启动', 400);
+
+        $this->status = self::STATUS_STARTING;
+
+        // 拉取镜像
+        if (Event::Dispatch(
+            new ImagePullEvent($this, $this->image)
+        )) {
+            $stream = new EventStream();
+            $image = explode(':', $this->image, 2);
+            $stream->handle('/images/create?fromImage=' . $image[0] . '&tag=' . ($image[1] ?? 'latest'), function (CurlHandle $ch, array $data) {
+                // TODO 异常处理
+                Event::Dispatch(new ImagePullingEvent($this, $this->image, $data));
+            }, 'POST');
+
+            Event::Dispatch(
+                new ImagePulledEvent($this, $this->image)
+            );
+        }
 
         $client = new Docker();
         $client->post('/containers/create?name=' . $this->uuid, [
@@ -125,8 +146,6 @@ class Instance
             ]
         ] + ($this->app->startup ? ['Cmd' => $this->app->startup] : []));
         $client->post('/containers/' . $this->uuid . '/start', []);
-
-        $this->status = self::STATUS_STARTING;
         Event::Dispatch(
             new InstanceStatusUpdateEvent($this, $this->status)
         );

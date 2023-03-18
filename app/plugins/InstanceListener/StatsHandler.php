@@ -2,7 +2,7 @@
 
 namespace app\plugins\InstanceListener;
 
-use app\Framework\Client\Docker\Stats;
+use app\Framework\Client\Docker\EventStream;
 use app\Framework\Client\Panel;
 use app\Framework\Logger;
 use app\Framework\Model\Instance;
@@ -35,7 +35,7 @@ class StatsHandler
         go(function () use ($instance) {
             $logger = Logger::Get('InstanceListener');
 
-            $client = new Stats();
+            $client = new EventStream();
 
             if (isset(self::$list[$instance->uuid]))
                 return $logger->info('实例 ' . $instance->uuid . ' 状态已在监听');
