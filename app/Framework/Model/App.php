@@ -5,7 +5,7 @@ namespace app\Framework\Model;
 class App
 {
     static public array $filter = [
-        'id', 'name', 'data_path', 'working_path', 'images', 'config', 'startup', 'skip_install', 'install_image', 'install_script'
+        'id', 'name', 'data_path', 'working_path', 'images', 'config', 'startup', 'stop', 'skip_install', 'install_image', 'install_script'
     ];
 
     public array $data_path;
@@ -24,7 +24,7 @@ class App
         public bool $skip_install,
         public string $install_image,
         public string $install_script,
-        public string $exit = 'stop',    // TODO
+        public string $stop
     ) {
         $this->data_path = json_decode($data_path, true);
         $this->images = json_decode($images, true);

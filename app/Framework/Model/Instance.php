@@ -130,7 +130,7 @@ class Instance
 
     public function stop($wait = true)
     {
-        StdioHandler::Write($this, $this->app->exit . PHP_EOL);
+        StdioHandler::Write($this, $this->app->stop . PHP_EOL);
 
         // Stopping 事件
         $this->status = self::STATUS_STOPPING;
