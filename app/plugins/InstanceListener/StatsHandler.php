@@ -8,6 +8,7 @@ use app\Framework\Logger;
 use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
 use app\Framework\Util\Config;
+use app\plugins\InstanceListener\Event\InstanceDiskExceedEvent;
 use app\plugins\InstanceListener\Event\InstanceStatsUpdateEvent;
 use CurlHandle;
 use Swoole\Timer;
@@ -55,7 +56,9 @@ class StatsHandler
 
     static public function Push()
     {
-        Logger::Get('InstanceListener')->debug('正在扫描实例存储用量...');
+        $logger = Logger::Get('InstanceListener');
+        $logger->debug('正在扫描实例存储用量...');
+
         // 在扫描超大文件夹时使用 du 命令耗时较 PHP 递归迭代可减少 ~50%
         $chart = [];
         $dataPath = Config::Get()['storage_path']['instance_data'];
@@ -66,11 +69,23 @@ class StatsHandler
             $chart[$uuid] = $bytes;
         }
 
-        Logger::Get('InstanceListener')->info('正在上报实例统计数据...');
+        $logger->info('正在上报实例统计数据...');
         $client = new Panel();
         $client->put('/api/node/ins/stats', [
-            'data' => array_map(function (Instance $instance) use($chart) {
+            'data' => array_map(function (Instance $instance) use ($chart, $logger) {
                 $instance->stats->disk = $chart[$instance->uuid] ?? 0;
+
+                // TODO 是否需要设置超时时间 并强制关机？
+                if ($instance->status == Instance::STATUS_RUNNING && $instance->stats->disk > $instance->disk * 1024 * 1024) {
+                    // 磁盘空间超出限制
+                    if (Event::Dispatch(
+                        new InstanceDiskExceedEvent($instance)
+                    )) {
+                        $instance->stop();
+                        $logger->info('实例 ' . $instance->uuid . ' 的存储空间超限 正在关机');
+                    }
+                }
+
                 return [
                     'id' => $instance->id,
                     'status' => $instance->status,
@@ -78,6 +93,5 @@ class StatsHandler
                 ];
             }, Instance::$list)
         ]);
-        // TODO
     }
 }

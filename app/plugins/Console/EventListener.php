@@ -16,6 +16,7 @@ use app\Framework\Plugin\EventListener as PluginEventListener;
 use app\Framework\Plugin\EventPriority;
 use app\Framework\Wrapper\Response;
 use app\plugins\Console\Event\InstancePowerEvent;
+use app\plugins\InstanceListener\Event\InstanceDiskExceedEvent;
 use app\plugins\InstanceListener\Event\InstanceMessageEvent;
 use app\plugins\InstanceListener\Event\InstanceStatsUpdateEvent;
 use app\plugins\InstanceListener\Event\InstanceStdinEvent;
@@ -180,5 +181,13 @@ class EventListener extends PluginEventListener
                 'data' => $ev->stats->toArray()
             ]);
         }
+    }
+
+    #[EventPriority(EventPriority::NORMAL)]
+    public function onInstanceDiskExceed(InstanceDiskExceedEvent $ev)
+    {
+        Event::Dispatch(
+            new InstanceMessageEvent($ev->instance, '实例存储空间超限 正在关机')
+        );
     }
 }
