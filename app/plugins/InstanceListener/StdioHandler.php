@@ -8,6 +8,7 @@ use app\Framework\Model\Instance;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\InstanceStatusUpdateEvent;
 use app\plugins\InstanceListener\Event\InstanceAttachEvent;
+use app\plugins\InstanceListener\Event\InstanceMessageEvent;
 use app\plugins\InstanceListener\Event\InstanceStdoutEvent;
 use Swoole\Coroutine\Http\Client;
 use Swoole\WebSocket\CloseFrame;
@@ -51,8 +52,17 @@ class StdioHandler
 
                 if ($frame instanceof CloseFrame || is_string($frame)) {
                     // 连接断开返回 CloseFrame 或空字符串
-                    Logger::Get('InstanceListener')->debug('实例 ' . $instance->uuid . ' 的标准 IO 监听连接已断开');
-                    // TODO 异常断开判断
+                    $logger->debug('实例 ' . $instance->uuid . ' 的标准 IO 监听连接已断开');
+
+                    // 异常退出检测
+                    if ($instance->status !== Instance::STATUS_STOPPED) {
+                        $instance->kill();
+                        Event::Dispatch(
+                            new InstanceMessageEvent($instance, '标准 IO 监听连接异常退出 正在终止')
+                        );
+                        $logger->warning('实例 ' . $instance->uuid . ' 标准 IO 监听连接异常退出 正在终止');
+                    }
+
                     $client->close();
                     break;
                 }
