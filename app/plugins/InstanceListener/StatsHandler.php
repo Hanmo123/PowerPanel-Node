@@ -76,7 +76,7 @@ class StatsHandler
                 $instance->stats->disk = $chart[$instance->uuid] ?? 0;
 
                 // TODO 是否需要设置超时时间 并强制关机？
-                if ($instance->status == Instance::STATUS_RUNNING && $instance->stats->disk > $instance->disk * 1024 * 1024) {
+                if ($instance->status == Instance::STATUS_RUNNING && $instance->isDiskExceed()) {
                     // 磁盘空间超出限制
                     if (Event::Dispatch(
                         new InstanceDiskExceedEvent($instance)

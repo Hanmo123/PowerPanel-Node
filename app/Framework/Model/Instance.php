@@ -96,6 +96,10 @@ class Instance
 
         if ($this->status !== self::STATUS_STOPPED)
             throw new InstanceStartException('实例未处于停止状态', 400);
+        if ($this->isDiskExceed())
+            throw new InstanceStartException('实例存储空间超限 无法启动', 400);
+        if ($this->is_suspended)
+            throw new InstanceStartException('实例已被暂停 无法启动', 400);
 
         $client = new Docker();
         $client->post('/containers/create?name=' . $this->uuid, [
@@ -242,6 +246,11 @@ class Instance
             'SERVER_VERSION=' . $this->version->version
         ];
         // TODO 获取实例变量
+    }
+
+    public function isDiskExceed()
+    {
+        return $this->stats->disk > $this->disk * 1024 * 1024;
     }
 
     static public function GetBasePath()
