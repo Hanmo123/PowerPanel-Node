@@ -7,6 +7,7 @@ use app\Framework\Client\Docker\EventStream;
 use app\Framework\Client\Panel;
 use app\Framework\Exception\InstanceStartException;
 use app\Framework\Logger;
+use app\Framework\Model\Base\AttributesUpdatable;
 use app\Framework\Plugin\Event;
 use app\Framework\Plugin\Event\ImagePulledEvent;
 use app\Framework\Plugin\Event\ImagePullEvent;
@@ -24,6 +25,8 @@ use function Co\go;
 
 class Instance
 {
+    use AttributesUpdatable;
+
     const STATUS_INSTALLING = 1;
     const STATUS_STARTING = 11;
     const STATUS_RUNNING = 21;
@@ -278,43 +281,53 @@ class Instance
         return Config::Get()['storage_path']['instance_data'];
     }
 
+    /**
+     * 构建实例所需的子对象
+     *
+     * @param array $attributes
+     * @return array
+     */
+    static public function buildObjects(array $attributes)
+    {
+        return [
+            'app' => new App(...array_intersect_key($attributes['app'], array_flip(App::$filter))),
+            'version' => new Version(...array_intersect_key($attributes['version'], array_flip(Version::$filter))),
+            'allocation' => new Allocation(...array_intersect_key($attributes['allocation'], array_flip(Allocation::$filter))),
+            'allocations' => array_map(function ($allocation) {
+                return new Allocation(...array_intersect_key($allocation, array_flip(Allocation::$filter)));
+            }, $attributes['allocations'])
+        ];
+    }
+
     static public function fromAttributes(array $attributes)
     {
         return new self(
             ...array_intersect_key($attributes, array_flip(self::$filter)),
-            ...[
-                'app' => new App(...array_intersect_key($attributes['app'], array_flip(App::$filter))),
-                'version' => new Version(...array_intersect_key($attributes['version'], array_flip(Version::$filter))),
-                'allocation' => new Allocation(...array_intersect_key($attributes['allocation'], array_flip(Allocation::$filter))),
-                'allocations' => array_map(function ($allocation) {
-                    return new Allocation(...array_intersect_key($allocation, array_flip(Allocation::$filter)));
-                }, $attributes['allocations'])
-            ]
+            ...self::buildObjects($attributes)
         );
     }
 
     static public function Get(string $uuid, bool $refresh = true)
     {
+        if (!$instance = self::$list[$uuid]) return false;
         if ($refresh) {
-            $current = self::$list[$uuid] ?? false;
-
+            // 从面板获取实例信息
             $client = new Panel();
             $attributes = $client->post('/api/node/ins/detail', [
                 'attributes' => [
                     'uuid' => $uuid
                 ]
             ])['attributes'];
-            $latest = self::fromAttributes($attributes);
 
-            if ($current) {
-                // 存在旧对象 从旧对象合并状态参数
-                $latest->status = $current->status;
-                $latest->stats = $current->stats;
-            }
-
-            self::$list[$attributes['uuid']] = $latest;
+            // 写入属性 不可替换对象
+            // 部分协程将对象取出并存放在变量中 若直接替换对象 变量中的对象与此处将不统一
+            // 其他子对象没有类似的需求 可直接替换
+            $instance->updateAttributes(
+                array_intersect_key($attributes, array_flip(self::$filter))
+                    + self::buildObjects($attributes)
+            );
         }
-        return self::$list[$uuid];
+        return $instance;
     }
 
     static protected function InitList()
@@ -330,7 +343,7 @@ class Instance
         return array_map(
             function ($data) {
                 // TODO 差异容器处理
-                self::Get(substr($data['Names'][0], 1))->status
+                self::Get(substr($data['Names'][0], 1), false)->status
                     = in_array($data['State'], ['starting', 'running']) ? self::STATUS_RUNNING : self::STATUS_STOPPED;
             },
             json_decode((new Docker())->get('/containers/json?filters={"label":["Service=PowerPanel"]}'), true)

@@ -55,7 +55,7 @@ class StdioHandler
                     $logger->debug('实例 ' . $instance->uuid . ' 的标准 IO 监听连接已断开');
 
                     // 异常退出检测
-                    if ($instance->status !== Instance::STATUS_STOPPED) {
+                    if (!in_array($instance->status, [Instance::STATUS_STOPPING, Instance::STATUS_STOPPED])) {
                         $instance->kill();
                         Event::Dispatch(
                             new InstanceMessageEvent($instance, '标准 IO 监听连接异常退出 正在终止')
