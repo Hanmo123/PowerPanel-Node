@@ -197,9 +197,10 @@ class Instance
     {
         if ($this->app->skip_install)
             throw new InstallSkippedException();
-
         if ($this->status !== self::STATUS_STOPPED)
             throw new InstallStatusConflict();
+        if ($this->is_suspended)
+            throw new InstallStatusConflict('已被暂停的实例无法重装', 400);
 
         $script = Config::Get()['storage_path']['scripts'] . '/' . $this->uuid . '.sh';
 
