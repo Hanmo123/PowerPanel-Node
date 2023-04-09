@@ -106,6 +106,7 @@ class FileSystemHandler
 
     public function read(string $target)
     {
+        // TODO 文件大小检测
         $target = Path::canonicalize($this->getBasePath() . $this->normalizePath($target));
         if ($this->isTraversal($target))
             throw new \Exception('路径不合法。', 400);
